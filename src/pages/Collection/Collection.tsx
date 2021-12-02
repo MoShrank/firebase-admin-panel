@@ -4,7 +4,6 @@ import { getDocuments, publishChanges } from "../../api";
 import { useState, useEffect, useMemo } from "react";
 import { useTable, usePagination } from "react-table";
 import { useParams } from "react-router-dom";
-
 import { getAuth } from "firebase/auth";
 
 interface EditableCellI {
@@ -16,6 +15,7 @@ interface EditableCellI {
     id: string;
   };
   updateMyData: (index: number, id: string, value: string) => void;
+  isDataDifferent: (index: number, id: string, value: string) => boolean;
 }
 
 // Create an editable cell renderer
@@ -24,6 +24,7 @@ const EditableCell = ({
   row: { index },
   column: { id },
   updateMyData, // This is a custom function that we supplied to our table instance
+  isDataDifferent,
 }: EditableCellI) => {
   // We need to keep and update the state of the cell normally
   const [value, setValue] = useState(initialValue);
@@ -42,7 +43,14 @@ const EditableCell = ({
     setValue(initialValue);
   }, [initialValue]);
 
-  return <input value={value} onChange={onChange} onBlur={onBlur} />;
+  return (
+    <input
+      value={value}
+      className={`${isDataDifferent(index, id, value) ? "edited" : "original"}`}
+      onChange={onChange}
+      onBlur={onBlur}
+    />
+  );
 };
 
 const defaultColumn = {
@@ -52,15 +60,26 @@ const defaultColumn = {
 interface TableI {
   columns: any;
   data: any;
+  originalData: any;
   updateMyData: (index: number, id: string, value: string) => void;
   skipPageReset: boolean;
 }
 
 // Be sure to pass our updateMyData and the skipPageReset option
-function Table({ columns, data, updateMyData, skipPageReset }: TableI) {
+function Table({
+  columns,
+  data,
+  originalData,
+  updateMyData,
+  skipPageReset,
+}: TableI) {
   // For this example, we're using pagination to illustrate how to stop
   // the current page from resetting when our data changes
   // Otherwise, nothing is different here.
+
+  const isDataDifferent = (index: number, id: string, value: string) => {
+    return originalData[index]?.[id] !== value;
+  };
 
   const {
     getTableProps,
@@ -101,6 +120,7 @@ function Table({ columns, data, updateMyData, skipPageReset }: TableI) {
       // That way we can call this function from our
       // cell renderer!
       updateMyData,
+      isDataDifferent,
     },
     usePagination
   );
@@ -197,18 +217,16 @@ const Collection = () => {
     });
   }, []);
 
+  const getCollections = async () => {
+    if (id) {
+      const collections = await getDocuments(id);
+      setDocuments(collections);
+      setOriginalDocuments(collections);
+    }
+  };
+
   useEffect(() => {
     const auth = getAuth();
-    console.log(auth);
-
-    const getCollections = async () => {
-      if (id) {
-        const collections = await getDocuments(id);
-        setDocuments(collections);
-        setOriginalDocuments(collections);
-      }
-    };
-
     getCollections();
   }, []);
 
@@ -238,6 +256,7 @@ const Collection = () => {
     if (id && documents.length) {
       setPublishEnabled(false);
       await publishChanges(id, documents);
+      await getCollections();
       setPublishEnabled(true);
     }
   };
@@ -259,6 +278,7 @@ const Collection = () => {
       <Table
         columns={columns}
         data={documents}
+        originalData={originalDocuments}
         updateMyData={updateMyData}
         skipPageReset={skipPageReset}
       />

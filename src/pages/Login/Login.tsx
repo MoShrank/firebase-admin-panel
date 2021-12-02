@@ -21,7 +21,6 @@ const Login = () => {
     } catch (error: any) {
       const errorCode = error.code;
       const errorMessage = error.message;
-      console.log(errorMessage);
     }
   };
 
