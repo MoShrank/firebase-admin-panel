@@ -1,0 +1,39 @@
+{
+    "collections": [
+            {
+            "name": "projects",
+            "fields": [
+                {
+                    "name": "name",
+                    "type": "string",
+                    "required": true
+                },
+                {
+                    "name": "description",
+                    "type": "string",
+                    "required": true
+                },
+                {
+                    "name": "url",
+                    "type": "string",
+                    "required": false
+                },
+                {
+                    "name": "link",
+                    "type": "string",
+                    "required": false
+                },
+                {
+                    "name": "learnings",
+                    "type": "string",
+                    "required": false
+                },
+                {
+                    "name": "tags",
+                    "type": "array",
+                    "required": false
+                }
+            ]
+        }
+    ]
+}
